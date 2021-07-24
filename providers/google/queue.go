@@ -5,6 +5,7 @@ package google
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	googlepubsub "cloud.google.com/go/pubsub"
@@ -127,7 +128,7 @@ func (s *subscription) Receive(ctx context.Context, handler pubsub.SubscribeHand
 	err := s.subscription.Receive(ctx, func(ctx context.Context, msg *googlepubsub.Message) {
 		handler(ctx, subscriberMessage{msg})
 	})
-	if err != nil {
+	if failed(err) {
 		return fmt.Errorf("google: error receiving messages (project=%s subscription=%s): %w",
 			s.t.q.cfg.projectID, s.subscription.ID(), err)
 	}
@@ -174,4 +175,8 @@ func getSubscriptionConfigToUpdate(opts ...pubsub.SubscribeOption) googlepubsub.
 			MaximumBackoff: subscribeConfig.RetryPolicy.MaxBackoff,
 		},
 	}
+}
+
+func failed(err error) bool {
+	return err != nil && !errors.Is(err, context.Canceled) && status.Code(err) != codes.Canceled
 }
