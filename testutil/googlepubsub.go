@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/ory/dockertest"
+	"github.com/ory/dockertest/docker"
 )
 
 // WithGooglePubSubEmulator runs a gcloud pubsub emulator in a docker container,
@@ -19,9 +20,10 @@ func WithGooglePubSubEmulator(ctx context.Context, callback func()) error {
 	}
 
 	resource, err := dockerPool.RunWithOptions(&dockertest.RunOptions{
-		Repository: "bigtruedata/gcloud-pubsub-emulator",
-		Tag:        "latest",
-		Cmd:        []string{"start", "--host-port", "0.0.0.0:8538"},
+		Repository:   "fixl/google-cloud-sdk-emulators",
+		Tag:          "349.0.0-pubsub",
+		Cmd:          []string{"start", "--host-port=0.0.0.0:8085"},
+		ExposedPorts: []string{"8085"},
 	})
 	if err != nil {
 		return fmt.Errorf("error running pubsub emulator: %w", err)
@@ -31,8 +33,9 @@ func WithGooglePubSubEmulator(ctx context.Context, callback func()) error {
 	} else {
 		_ = resource.Expire(60 * 10)
 	}
+	go TailLogs(ctx, dockerPool, resource)
 
-	addr := resource.GetHostPort("8538/tcp")
+	addr := resource.GetHostPort("8085/tcp")
 
 	if err = dockerPool.Retry(func() error {
 		conn, err := net.Dial("tcp", addr)
@@ -55,4 +58,15 @@ func WithGooglePubSubEmulator(ctx context.Context, callback func()) error {
 	}
 
 	return nil
+}
+
+func TailLogs(ctx context.Context, pool *dockertest.Pool, resource *dockertest.Resource) {
+	_ = pool.Client.Logs(docker.LogsOptions{
+		Context:      ctx,
+		Stderr:       true,
+		Stdout:       true,
+		Follow:       true,
+		Container:    resource.Container.ID,
+		OutputStream: os.Stderr,
+	})
 }

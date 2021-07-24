@@ -40,7 +40,7 @@ jobs:
 
       - name: Pull test docker images
         run: |
-          docker pull bigtruedata/gcloud-pubsub-emulator:latest
+          docker pull fixl/google-cloud-sdk-emulators:349.0.0-pubsub
 
       - name: Download go modules
         run: |
