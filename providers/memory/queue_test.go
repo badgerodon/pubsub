@@ -12,5 +12,5 @@ func TestQueue(t *testing.T) {
 	ctx, clearTimeout := context.WithTimeout(context.Background(), time.Second*10)
 	defer clearTimeout()
 
-	testutil.Run(t, New(ctx))
+	testutil.RunTestSuite(t, New(ctx))
 }

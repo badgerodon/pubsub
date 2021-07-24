@@ -2,13 +2,14 @@ package testutil
 
 import (
 	"context"
+	"sync/atomic"
 	"testing"
 
 	"github.com/badgerodon/pubsub"
 	"github.com/stretchr/testify/assert"
 )
 
-func Run(t *testing.T, q pubsub.Queue) {
+func RunTestSuite(t *testing.T, q pubsub.Queue) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -17,7 +18,6 @@ func Run(t *testing.T, q pubsub.Queue) {
 		return
 	}
 
-
 	subscription, err := topic.Subscribe(ctx, "SUBSCRIPTION-1")
 	if !assert.NoError(t, err) {
 		return
@@ -25,8 +25,13 @@ func Run(t *testing.T, q pubsub.Queue) {
 
 	recv := make(chan pubsub.Message, 4)
 	go func() {
-		err := subscription.Receive(ctx, func(ctx context.Context, msg pubsub.SubscriberMessage) {
-			recv <-msg
+		receiveContext, receiveCancel := context.WithCancel(ctx)
+		var cnt int64
+		err := subscription.Receive(receiveContext, func(ctx context.Context, msg pubsub.SubscriberMessage) {
+			if atomic.AddInt64(&cnt, 1) >= 4 {
+				receiveCancel()
+			}
+			recv <- msg
 			msg.Ack()
 		})
 		assert.NoError(t, err)
@@ -48,9 +53,9 @@ func Run(t *testing.T, q pubsub.Queue) {
 	seen := map[string]struct{}{}
 	for i := 0; i < len(msgs); i++ {
 		msg := <-recv
-		seen[msg.ID()] = struct{}{}
+		seen[string(msg.Data())] = struct{}{}
 	}
 	assert.Equal(t, map[string]struct{}{
-		"1":{}, "2":{}, "3":{}, "4":{},
+		"1": {}, "2": {}, "3": {}, "4": {},
 	}, seen)
 }
