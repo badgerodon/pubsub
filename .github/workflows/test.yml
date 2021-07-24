@@ -24,6 +24,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
+      - name: Cache go build
+        uses: actions/cache@v2
+        with:
+          path: ${{ steps.go-cache-paths.outputs.go-build }}
+          key: ${{ runner.os }}-go-build
+
       - name: Cache go modules
         uses: actions/cache@v2
         with:
