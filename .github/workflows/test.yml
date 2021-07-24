@@ -31,6 +31,10 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-mod-
 
+      - name: Cache docker
+        uses: satackey/action-docker-layer-caching@v0.0.11
+        continue-on-error: true
+
       - name: Download go modules
         run: go mod download
       - name: Run tests
