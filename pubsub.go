@@ -48,7 +48,7 @@ type Topic interface {
 type (
 	// The SubscribeConfig customizes how subscription works.
 	SubscribeConfig struct {
-		RetryPolicy *RetryPolicy
+		RetryPolicy RetryPolicy
 	}
 	// A SubscribeOption customizes the SubscribeConfig.
 	SubscribeOption = func(config *SubscribeConfig)

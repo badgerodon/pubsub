@@ -67,7 +67,7 @@ func (t *topic) run(ctx context.Context) {
 
 		t.mu.RLock()
 		ss := make([]*subscription, 0, len(t.subscriptions))
-		for _, s := range ss {
+		for _, s := range t.subscriptions {
 			ss = append(ss, s)
 		}
 		t.mu.RUnlock()
