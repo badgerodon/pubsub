@@ -8,7 +8,7 @@ on:
   pull_request:
 jobs:
   test:
-    name: Test with Coverage
+    name: Go
     runs-on: ubuntu-latest
     steps:
       - name: Install go
@@ -35,10 +35,16 @@ jobs:
         uses: satackey/action-docker-layer-caching@v0.0.11
         continue-on-error: true
 
+      - name: Pull test docker images
+        run: |
+          docker pull bigtruedata/gcloud-pubsub-emulator:latest
+
       - name: Download go modules
         run: go mod download
+
       - name: Run tests
         run: go test -race -covermode atomic -coverprofile=covprofile ./...
+
       - name: Send coverage
         env:
           COVERALLS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
