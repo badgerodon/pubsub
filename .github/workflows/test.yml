@@ -21,7 +21,8 @@ jobs:
           echo "::set-output name=go-build::$(go env GOCACHE)"
           echo "::set-output name=go-mod::$(go env GOMODCACHE)"
 
-      - uses: actions/checkout@v2
+      - name: Checkout
+        uses: actions/checkout@v2
 
       - name: Cache go modules
         uses: actions/cache@v2
@@ -31,21 +32,20 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-mod-
 
-      - name: Cache docker
-        uses: satackey/action-docker-layer-caching@v0.0.11
-        continue-on-error: true
-
       - name: Pull test docker images
         run: |
           docker pull bigtruedata/gcloud-pubsub-emulator:latest
 
       - name: Download go modules
-        run: go mod download
+        run: |
+          go mod download
 
       - name: Run tests
-        run: go test -race -covermode atomic -coverprofile=covprofile ./...
+        run: |
+          go test -race -covermode atomic -coverprofile=covprofile ./...
 
       - name: Send coverage
         env:
           COVERALLS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: go run github.com/mattn/goveralls -coverprofile=covprofile -service=github
+        run: |
+          go run github.com/mattn/goveralls -coverprofile=covprofile -service=github
