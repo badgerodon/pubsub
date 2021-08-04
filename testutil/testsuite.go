@@ -9,8 +9,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func RunTestSuite(t *testing.T, q pubsub.Queue) {
-	ctx, cancel := context.WithCancel(context.Background())
+func RunTestSuite(ctx context.Context, t *testing.T, q pubsub.Queue) {
+	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
 	topic, err := q.Topic(ctx, "TOPIC-1")
@@ -52,8 +52,12 @@ func RunTestSuite(t *testing.T, q pubsub.Queue) {
 
 	seen := map[string]struct{}{}
 	for i := 0; i < len(msgs); i++ {
-		msg := <-recv
-		seen[string(msg.Data())] = struct{}{}
+		select {
+		case <-ctx.Done():
+			assert.NoError(t, ctx.Err())
+		case msg := <-recv:
+			seen[string(msg.Data())] = struct{}{}
+		}
 	}
 	assert.Equal(t, map[string]struct{}{
 		"1": {}, "2": {}, "3": {}, "4": {},
