@@ -20,6 +20,6 @@ func TestQueue(t *testing.T) {
 		}
 		defer func() { _ = q.Close() }()
 
-		testutil.RunTestSuite(t, q)
+		testutil.RunTestSuite(ctx, t, q)
 	}))
 }
